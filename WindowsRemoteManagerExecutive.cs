@@ -19,6 +19,7 @@ namespace WindowsRemoteManager
         {
            
         }
+
         
         private List<string> ExecuteBat(Command command)
         {
@@ -73,7 +74,7 @@ namespace WindowsRemoteManager
             foreach (string Instruction in command.Instructions)
             {
                 
-                if (!Instruction.StartsWith(@"'") || !Instruction.StartsWith(@"{"))
+                if (!Instruction.StartsWith(@"'") && !Instruction.StartsWith(@"{"))
                 {
                     ProcessStartInfo psiOpt = new ProcessStartInfo(@"cmd.exe", @"/C " + @Instruction);
                     psiOpt.WindowStyle = ProcessWindowStyle.Hidden;
@@ -86,16 +87,20 @@ namespace WindowsRemoteManager
                 }
                 else if (Instruction.StartsWith(@"'curl"))
                 {
-                    ProcessStartInfo psiOpt = new ProcessStartInfo(@"curl.exe", /*@"/C " +*/ @Instruction.Replace(@"'curl", ""));
-                    psiOpt.WindowStyle = ProcessWindowStyle.Hidden;
-                    psiOpt.RedirectStandardOutput = true;
-                    psiOpt.UseShellExecute = false;
-                    psiOpt.CreateNoWindow = true;
-                    Process procCommand = Process.Start(psiOpt);
-                    StreamReader sr = procCommand.StandardOutput;
-                    result.Add(sr.ReadToEnd());
+                    try
+                    {
+                        ProcessStartInfo psiOpt = new ProcessStartInfo(@"curl.exe", /*@"/C " +*/ @Instruction.Replace(@"'curl", ""));
+                        psiOpt.WindowStyle = ProcessWindowStyle.Hidden;
+                        psiOpt.RedirectStandardOutput = true;
+                        psiOpt.UseShellExecute = false;
+                        psiOpt.CreateNoWindow = true;
+                        Process procCommand = Process.Start(psiOpt);
+                        StreamReader sr = procCommand.StandardOutput;
+                        result.Add(sr.ReadToEnd());
+                    }
+                    catch (Exception error) { result.Add(error.Message); }
                 }
-                else if (Instruction.StartsWith(@"'SetRequestsInterval"))
+                else if (Instruction.ToLower().StartsWith(@"'setrequestsinterval"))
                 {
                     string IntervalString = Instruction.Split(" ")[1].Trim();
                     try
@@ -108,6 +113,15 @@ namespace WindowsRemoteManager
                     }
                     catch { result.Add("Wrong input for requests interval"); }
 
+                }
+                else if (Instruction.ToLower().StartsWith(@"'setnickname"))
+                {
+                    if (Instruction.Split(" ").Length > 1)
+                    {
+                        this.NickName = Instruction.Split(" ")[1].Trim();
+                        result.Add("Nickname of the executive changed to " + this.NickName);
+                        this.RegisterExecutive(RegistrationOption.Upload);
+                    }
                 }
             }
             return result;
@@ -189,7 +203,13 @@ namespace WindowsRemoteManager
             }
         }
 
-        private void RegisterExecutive()
+        protected enum RegistrationOption
+        {
+            Upload,
+            Accept
+        }
+
+        private void RegisterExecutive(RegistrationOption RO = RegistrationOption.Accept)
         {
             string Executives = GetMessageBodyByHeader("Executives", true);
             if (Executives != "Message not found")
@@ -204,7 +224,9 @@ namespace WindowsRemoteManager
                     if (Row[0].Contains(Mac))
                     {
                         this.ID = Convert.ToInt64(Row[1]);
-                        ExecutivesTable[i] = ExecutivesTable[i].Replace(Row[2], this.NickName).Replace(Row[3], DateTime.Now.ToString() );
+                        if (RO == RegistrationOption.Accept) { this.NickName = Row[2]; }
+                        else { ExecutivesTable[i] = ExecutivesTable[i].Replace(Row[2], this.NickName); }
+                        ExecutivesTable[i] = ExecutivesTable[i].Replace(Row[3], DateTime.Now.ToString() );
                         this.Send("Executives", String.Join('\n', ExecutivesTable));
                         
                         return;
@@ -229,6 +251,11 @@ namespace WindowsRemoteManager
             this.ID = 1;
             this.Send("Executives", Message);
 
+        }
+
+        private void UploadInfo()
+        {
+            
         }
     }
 }

@@ -94,7 +94,7 @@ abstract class WindowsRemoteManagerGeneral
 
         return result.Trim();
     }
-    
+   
 }
 
 

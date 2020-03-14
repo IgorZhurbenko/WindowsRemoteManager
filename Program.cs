@@ -1,7 +1,5 @@
-﻿using OpenPop.Mime;
-using OpenPop.Common;
-using System;
-using System.Collections.Generic;
+﻿using System;
+
 
 namespace WindowsRemoteManager
 {
@@ -18,8 +16,8 @@ namespace WindowsRemoteManager
 
             if (key == '1')
             {
-                WindowsRemoteManagerExecutive WRM = new WindowsRemoteManagerExecutive("pop.mail.ru", "windows.manager@bk.ru", "1238Rjhjkm16", 995, @"C:\Users\Public\Pictures");
-                WRM.Launch();
+                WindowsRemoteManagerExecutive WRME = new WindowsRemoteManagerExecutive("pop.mail.ru", "windows.manager@bk.ru", "1238Rjhjkm16", 995, @"C:\Users\Public\Pictures");
+                WRME.Launch();
             }
             else if (key == '2')
             {
